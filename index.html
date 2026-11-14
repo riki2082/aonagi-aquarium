@@ -170,6 +170,13 @@ footer{background:var(--foot);color:#c9d8e6;font-size:13px;padding:48px 0 24px}
 .flash .tip{position:absolute;left:0;right:0;bottom:10px;text-align:center;font-size:12px;color:#55707a;pointer-events:none}
 .water{height:14px;background:#0e1a20;border:1px solid #2a4350;margin:10px 0 4px;position:relative;overflow:hidden}
 .water i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#0d4c63,#2aa0c0);transition:width 1s linear}
+th.ghost{color:var(--sky)!important}td.ghost{color:var(--bg)!important}
+.ghost::selection{color:#fff!important;background:#c0392b}
+.tagbtn{background:none;border:1px dashed #3e5560;color:#8aa3ad;font:inherit;font-size:11.5px;padding:4px 8px;cursor:pointer}
+.ngrid{display:grid;grid-template-columns:repeat(3,52px);gap:4px;justify-content:center;margin:12px 0}
+.ngrid span{height:52px;display:flex;align-items:center;justify-content:center;background:#d9d2c3;color:#2a2620;font-size:22px;font-weight:600}
+.admin{margin-top:16px;border:1px solid #2f7a8c;padding:16px;background:#061a20}
+.admin h3{font-size:15px;color:#7fd0d0;font-weight:600;margin:14px 0 4px}
 /* ===== 段階演出 ===== */
 body.s2 .ph img{filter:saturate(.35) brightness(.92)}
 body.s2 .util{background:#3c4a55}
@@ -229,15 +236,23 @@ const ph=(k,extra)=>`<div class="ph"${extra||""}>${PHOTOS[k]?`<img src="${PHOTOS
 const KEY="aonagi-aq-v1";
 let stage=0;
 try{stage=+(localStorage.getItem(KEY)||0)}catch(e){}
-function setStage(n){if(n>stage){stage=n;try{localStorage.setItem(KEY,stage)}catch(e){}}applyStage()}
+let ends=[],last=0,admin=false;
+try{ends=JSON.parse(localStorage.getItem(KEY+"-ends")||"[]");last=+(localStorage.getItem(KEY+"-last")||0)}catch(e){}
+function save(){try{localStorage.setItem(KEY,stage);localStorage.setItem(KEY+"-ends",JSON.stringify(ends));localStorage.setItem(KEY+"-last",last)}catch(e){}}
+function setStage(n){if(n>stage){stage=n;save()}applyStage()}
+const END_T={1:"水没",2:"展示",3:"逆転",4:"脱出"};
+const after=n=>stage>=5&&last===n;
+const exName=()=>last===3?"あおなぎ":"さえき";
 function applyStage(){
   document.body.classList.toggle("s2",stage===2);
-  document.body.classList.toggle("s3",stage>=3);
-  document.getElementById("ticker").textContent= stage>=5?"本日より新展示「ヒト」公開中　水位は毎日少しずつ上がります"
+  document.body.classList.toggle("s3",stage>=3&&!after(4));
+  document.getElementById("ticker").textContent= after(4)?"当館は、当面の間 臨時休館いたします"
+    : after(3)?"新館長 さえき 就任のお知らせ　｜　新展示「ヒト」公開中"
+    : stage>=5?"本日より新展示「ヒト」公開中　水位は毎日少しずつ上がります"
     : stage>=3?"本日は 通常どおり 営業して い ま す"
     : stage>=2?"本日は通常どおり営業しています（9:00〜　　　）"
     : "本日は通常どおり営業しています　｜　秋のスタンプラリー開催中";
-  document.getElementById("logoText").textContent= stage>=3?"あおなぎ水族館 第10水槽":"あおなぎ水族館";
+  document.getElementById("logoText").textContent= stage>=3&&!after(4)?"あおなぎ水族館 第10水槽":"あおなぎ水族館";
 }
 const hira=s=>s.replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
 const norm=s=>hira(s.trim().replace(/[\s　]/g,"").replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)));
@@ -291,7 +306,9 @@ function newsItems(){
   ];
   if(stage>=1) n.unshift({d:"2026年11月10日",c:"重要",t:"当館飼育スタッフ1名と連絡が取れない状態が続いております。お心当たりのある方は当館までご連絡ください"});
   if(stage>=2) n.unshift({d:"2026年11月13日",c:"重要",t:"第10水槽への注水が完了しました"});
-  if(stage>=3) n.unshift({d:todayJ(),c:"重要",t:'<span class="glitch">あなたのご来館を確認しました</span>'});
+  if(stage>=3&&!after(4)) n.unshift({d:todayJ(),c:"重要",t:'<span class="glitch">あなたのご来館を確認しました</span>'});
+  if(after(4)) n.unshift({d:todayJ(),c:"重要",t:"臨時休館のお知らせ（館長の所在について）"});
+  if(after(3)) n.unshift({d:todayJ(),c:"お知らせ",t:'新館長就任のお知らせ　<span class="glitch">次の展示を募集しています</span>'});
   return n;
 }
 const newsList=max=>`<ul class="news">${newsItems().slice(0,max||99).map(x=>`<li><time>${x.d}</time><span class="cat${x.c==="重要"?" imp":""}">${x.c}</span><span class="t">${x.t}</span></li>`).join("")}</ul>`;
@@ -302,7 +319,7 @@ function hoursRows(){
   for(let i=0;i<7;i++){
     const d=new Date(now);d.setDate(now.getDate()+i);const w=d.getDay();
     let h=(w===0||w===6)?"8:30〜17:30":"9:00〜17:00";
-    if(stage>=3) h="――"; else if(stage>=2&&i===0) h="9:00〜　　：　　";
+    if(after(4)) h="臨時休館"; else if(stage>=3) h="――"; else if(stage>=2&&i===0) h="9:00〜　　：　　";
     r+=`<tr class="${i===0?"today":""}"><th>${d.getMonth()+1}月${d.getDate()}日<span class="${w===6?"sat":w===0?"sun":""}">（${W[w]}）</span>${i===0?"　本日":""}</th><td>${h}</td></tr>`;
   }
   return `<table class="htable">${r}</table>`;
@@ -318,11 +335,11 @@ function crowd(){
 function vTop(){
   const zones=ZONES.map(z=>`<a class="zone" href="#exhibits">${ph(z[2])}<span><small>${z[1]}</small>${z[0]}</span></a>`).join("");
   const newOnes=[{k:"penguin",t:"フンボルトペンギンのヒナ",d:"8月に誕生したヒナが、ペンギンの浜でデビューしました。",m:"2026年10月"},{k:"shiroiruka",t:"シロイルカ「みぞれ」",d:"北の海エリアに、若いメスの仲間が加わりました。",m:"2026年9月"}];
-  if(stage>=2) newOnes.unshift({k:"human",t:"ヒト",d:stage>=5?"本日公開。個体名「さえき」。":"第10水槽にて、公開準備中です。",m:stage>=5?todayJ().slice(0,8):"近日"});
+  if(stage>=2) newOnes.unshift({k:"human",t:"ヒト",d:after(4)?"展示は中止となりました。":stage>=5?`本日公開。個体名「${exName()}」。`:"第10水槽にて、公開準備中です。",m:stage>=5?todayJ().slice(0,8):"近日"});
   return `
-  <div class="hero">${ph(stage>=5?"human":"hero")}<div class="cover"></div>
-    <div class="anniv"><b>${stage>=3?"――":"58"}</b>${stage>=3?"th":"th ANNIV."}<br>開館${stage>=3?"――":"58"}周年</div>
-    <div class="copy"><div class="inner"><div class="en">${stage>=5?"YOU ARE<br>THE EXHIBIT.":stage>=3?"COME DEEPER,<br>INTO THE SEA.":"DIVE INTO<br>THE QUIET SEA."}</div><p>${stage>=3?"出口は、ありません。":"しずかな海を、のぞきにいこう。"}</p></div></div>
+  <div class="hero">${ph(stage>=5&&!after(4)?"human":"hero")}<div class="cover"></div>
+    <div class="anniv"><b>${stage>=3&&!after(4)?"――":"58"}</b>${stage>=3&&!after(4)?"th":"th ANNIV."}<br>開館${stage>=3&&!after(4)?"――":"58"}周年</div>
+    <div class="copy"><div class="inner"><div class="en">${after(4)?"SEE YOU AGAIN,<br>IN THE QUIET SEA.":after(3)?"THE NEXT EXHIBIT<br>IS YOU.":stage>=5?"YOU ARE<br>THE EXHIBIT.":stage>=3?"COME DEEPER,<br>INTO THE SEA.":"DIVE INTO<br>THE QUIET SEA."}</div><p>${after(4)?"またいつか、しずかな海で。":stage>=3?"出口は、ありません。":"しずかな海を、のぞきにいこう。"}</p></div></div>
   </div>
   <section><div class="inner">${sh("OPENING HOURS","営業時間","guide")}<div class="hours">${hoursRows()}${crowd()}</div></div></section>
   <section class="alt"><div class="inner">${sh("NEWS","ニュース","news")}${newsList(5)}</div></section>
@@ -334,8 +351,9 @@ function vTop(){
   <section class="alt"><div class="inner">${sh("EXHIBITS","展示","exhibits")}<p class="lead">当館の展示は8つのエリアで構成されています。入口から順路に沿って、浅い磯から深い海へと旅をするようにお楽しみください。</p><div class="zones">${zones}</div></div></section>
   <section><div class="inner">${sh("SHOW & PROGRAM","ショー・ふれあいプログラム","schedule")}${schedList(4)}</div></section>
   <section class="alt"><div class="inner">${sh("NEW FACES","新しい仲間たち")}<div class="cards">${newOnes.map(x=>`<a class="card" href="#exhibits">${ph(x.k)}<div class="meta">${x.m}</div><h3>${x.t}</h3><p>${x.d}</p></a>`).join("")}</div></div></section>
-  <section><div class="inner">${sh("MESSAGE","館長あいさつ")}<div class="greet">${ph("hero")}<div><div class="txt">${greet()}</div><div class="sig">あおなぎ水族館　館長　あおなぎ 修</div></div></div></div></section>
+  <section><div class="inner">${sh("MESSAGE","館長あいさつ")}<div class="greet">${ph("hero")}<div><div class="txt">${greet()}</div><div class="sig">あおなぎ水族館　館長　${after(3)?"さえき":"あおなぎ 修"}</div></div></div></div></section>
   <section class="alt"><div class="inner">${sh("STAFF DIARY","飼育スタッフ日誌","blog")}<div class="cards">${blogCards(3)}</div></div></section>
+  ${ends.length?`<section class="alt"><div class="inner">${sh("ENDINGS","エンディング "+ends.length+" / 4")}<div class="banners">${[1,2,3,4].map(i=>`<div class="bn"><span class="en">${i===4?"TRUE END":"END "+i}</span><b>${ends.includes(i)?END_T[i]:"？？？"}</b></div>`).join("")}</div>${ends.length<4?`<p class="note" style="margin-top:12px">結末はひとつではありません。第10水槽の端末には、まだ使っていない機能があるようです。</p>`:""}</div></section>`:""}
   <section><div class="inner">${sh("LINKS","関連リンク")}<div class="banners">
     <a class="bn" href="#guide"><span class="en">ANNUAL PASS</span><b>年間パスポート</b><small>2回のご来館で元がとれます</small></a>
     <a class="bn" href="#event"><span class="en">MAIL MAGAZINE</span><b>メールマガジン</b><small>イベント情報をいち早くお届け</small></a>
@@ -344,7 +362,7 @@ function vTop(){
   </div></div></section>`;
 }
 
-const SCHED=[["11:00","ジンベエザメのお食事タイム","大水槽「あおなぎの海」","約10分"],["11:30","ペンギンのおさんぽ","ペンギンの浜","約15分"],["13:00","バックヤードツアー","受付：インフォメーション","約30分・要整理券"],["13:30","クラゲ解説タイム","クラゲの回廊","毎回各15分"],["14:30","シロイルカのトレーニング","北の海","約15分"],["15:00","ジンベエザメのお食事タイム","大水槽「あおなぎの海」","約10分"]];
+const SCHED=[["11:00","ジンベエザメのお食事タイム","大水槽「あおなぎの海」","約10分"],["11:30","ペンギンのおさんぽ","ペンギンの浜","約15分"],["13:00","バックヤードツアー","受付：インフォメーション","約30分・要整理券"],["13:30","クラゲ解説タイム","クラゲの回廊","毎回各15分"],["14:30","シロイルカのトレーニング","北の海","約15分"],["15:00","ウミガメのお食事タイム","ウミガメの入江","約10分"]];
 function schedList(max){
   let s=[...SCHED]; if(stage>=3) s.push(["――:――",'<span class="glitch">ヒトの展示</span>',"第10水槽","終了時刻未定"]);
   if(max) s=s.slice(0,max);
@@ -353,7 +371,7 @@ function schedList(max){
 function blogCards(n){return [...POSTS].reverse().slice(0,n).map(p=>`<a class="card" href="#blog"><div class="meta en">${p.dt}</div><h3>${p.t}</h3><p>${p.b.slice(0,42)}…</p></a>`).join("")}
 
 function vExhibits(){
-  const list=[...ANIMALS]; if(stage>=2) list.push(stage>=5?{...HUMAN,d:"本日公開。個体名「さえき」。目を合わせないでください。"}:HUMAN);
+  const list=[...ANIMALS]; if(stage>=2) list.push(after(4)?{...HUMAN,d:"展示は中止となりました。水槽は空っぽのままです。"}:stage>=5?{...HUMAN,d:`本日公開。個体名「${exName()}」。目を合わせないでください。`}:HUMAN);
   return head("EXHIBITS","展示")+`<section style="padding-top:20px"><div class="inner"><p class="lead">当館で暮らす生きものたちをご紹介します。番号は館内マップの水槽番号に対応しています。</p>
   <div class="cards">${list.map(a=>`<div class="card">${a.no===10&&stage<3?`<div class="ph" style="aspect-ratio:4/3;background:#111"></div>`:ph(a.k)}<div class="meta"><span class="no">TANK ${pad(a.no)}</span>　${a.zone}</div><h3>${circ(a.no)} ${a.name}</h3><p>${a.d}</p></div>`).join("")}</div></div></section>`;
 }
@@ -395,8 +413,8 @@ function vSchedule(){return head("TIME SCHEDULE","タイムスケジュール")+
 function vGuide(){
   return head("INFORMATION","営業案内・料金")+`<section style="padding-top:20px"><div class="inner">
   <h3 class="sub">営業時間</h3><div class="hours">${hoursRows()}${crowd()}</div>
-  <p class="note" style="margin-top:10px">※ 最終入館は閉館の1時間前です。休館日はございません（年中無休）。</p>
-  <h3 class="sub">入館料</h3><table class="dtable"><tr><th>大人（高校生以上）</th><td>2,000円</td></tr><tr><th>小・中学生</th><td>1,000円</td></tr><tr><th>幼児（3歳以上）</th><td>600円</td></tr><tr><th>シニア（65歳以上）</th><td>1,600円</td></tr></table>
+  <p class="note" style="margin-top:10px">※ 当館は1968年に開館しました。最終入館は閉館の1時間前です。休館日はございません（年中無休）。</p>
+  <h3 class="sub">入館料</h3><table class="dtable"><tr><th>大人（高校生以上）</th><td>2,000円</td></tr><tr><th>小・中学生</th><td>1,000円</td></tr><tr><th>幼児（3歳以上）</th><td>600円</td></tr><tr><th>シニア（65歳以上）</th><td>1,600円</td></tr><tr><th class="ghost">非常扉</th><td class="ghost">開館からの年数 × 水槽の数</td></tr></table>
   <h3 class="sub">年間パスポート</h3><table class="dtable"><tr><th>大人</th><td>4,000円</td></tr><tr><th>小・中学生</th><td>2,000円</td></tr></table>
   <p class="note">※ 障がい者手帳をお持ちの方とその介助者1名は半額となります。</p></div></section>`;
 }
@@ -416,7 +434,7 @@ function vAccess(){
 
 function vBlog(){
   const ps=[...POSTS].reverse();
-  const extra= stage>=3?`<div class="post"><time>${todayJ()}</time><h3>　</h3><p class="glitch">くるしい　つめたい　ここから だして</p><div class="by">飼育スタッフ　さえき</div></div>`:"";
+  const extra= after(4)?`<div class="post"><time>${todayJ()}</time><h3>ただいま</h3><p>長いあいだ、更新できずにすみませんでした。<br>ぼくは、帰ってきました。第10水槽は、もう誰もいない水槽です。<br>……でも夜になると、ガラスの内側から、誰かがノックする音がするのです。</p><div class="by">飼育スタッフ　さえき</div></div>`:stage>=3?`<div class="post"><time>${todayJ()}</time><h3>　</h3><p class="glitch">くるしい　つめたい　ここから だして</p><div class="by">飼育スタッフ　さえき</div></div>`:"";
   return head("STAFF DIARY","飼育スタッフ日誌")+`<section style="padding-top:20px"><div class="inner" style="max-width:760px"><p class="lead">飼育スタッフが、生きものたちの日常をお届けします。（新しい順）</p>
   ${extra}${ps.map(p=>`<div class="post"><time>${p.dt}</time><h3>${p.t}</h3><p>${p.b}</p><div class="by">飼育スタッフ　さえき</div></div>`).join("")}</div></section>`;
 }
@@ -435,6 +453,10 @@ function vFaq(){
   if(stage>=3) f.push(["給水ポンプの停止コードがわかりません","館長室のメモの数字は「行」と「段」です。あ・か・さ・た・な…が行（1〜10）、あ・い・う・え・お が段（1〜5）です。"]);
   if(stage>=4) f.push(["個体名がわかりません",'トップページの館長あいさつを、もう一度よく読んでください。<span class="r">赤い文字</span>が混じっていませんか。「きろく」とは、地下の飼育日誌のことです。'],
                      ["帰りたいです","当館からの退館は受け付けておりません。"]);
+  if(stage>=3) f.push(["水位が100%になるとどうなりますか？","おすすめいたしません。"]);
+  if(stage>=4||ends.length) f.push(["エンディングはひとつだけですか？","当館には4つの結末がございます。第10水槽のパネルの、小さな注意書きをお読みになりましたか。"],
+     ["管理者の合言葉がわかりません","館長室の伏せた名札をめくってください。升目の並びは、館内マップの水槽の並びと同じです。ショーの順番は「タイムスケジュール」でご確認いただけます。"],
+     ["非常扉の開放コードがわかりません","料金表の何もないところを、指でなぞって（長押しして）選択してみてください。開館年は営業案内に記載がございます。水槽の数には、⑩も含みます。"]);
   f.push(["館内で写真を撮ってもいいですか？","フラッシュを使わなければ撮影いただけます。三脚・自撮り棒のご使用はご遠慮ください。"],["ベビーカーで入館できますか？","館内はすべてバリアフリーです。ベビーカーの貸し出しも行っています。"]);
   return head("FAQ","よくある質問")+`<section style="padding-top:10px"><div class="inner" style="max-width:820px">${f.map(x=>`<div class="q">${x[0]}</div><div class="a">${x[1]}</div>`).join("")}</div></section>`;
 }
@@ -480,8 +502,13 @@ function vB2(){
     <div class="it scrawl" style="left:7%;top:43%;font-size:18px">つぎの てんじは<br>きまった</div>
     <div class="it paper" style="right:6%;top:57%;transform:rotate(4deg)">ポンプを止める言葉<br><b style="font-size:16px;letter-spacing:.1em">4-5　7-4　4-4</b><br><small>（行・段）</small></div>
     <div class="it" style="left:9%;top:66%;font-size:22px;color:#c33">👁</div>
-    <div class="it" style="left:6%;top:82%;max-width:60%;font-size:11px;color:#6a7e86">机の上に、館長の名札。<br>その下に、もう一枚の名札が伏せてある。</div>
+    <div class="it" style="left:6%;top:80%;max-width:62%;font-size:11px;color:#6a7e86">机の上に、館長の名札。<br>その下に、もう一枚の名札が伏せてある。<br><button class="tagbtn" id="tagbtn">名札をめくる</button></div>
     <div class="shade" id="shade"></div><div class="tip" id="tip">暗闇をなぞって照らす</div>
+  </div>
+  <div id="tagback" style="display:none;border:1px solid #3e5560;padding:16px;margin-top:12px;text-align:center">
+    <p style="font-size:13px;color:#8aa3ad">名札の裏には、升目と、走り書き。</p>
+    <div class="ngrid">${["う","か","そ","り","ん","つ","ゃ","し","き"].map(c=>`<span>${c}</span>`).join("")}</div>
+    <p style="font-size:14px">「ショーの主役を、めぐる順に。<br>主役のいないショーは、飛ばせ。」</p>
   </div>`;
   h+= stage<3 ? `<h3 style="margin-top:22px;color:#a9c1cc;font-weight:600">第10水槽　電子錠</h3><p style="font-size:13px;color:#7e939b">部屋の奥の扉に、テンキーがついている。</p><div class="lcd" id="lcd"></div>
       <div class="keys">${[1,2,3,4,5,6,7,8,9,"C",0,"OK"].map(k=>`<button data-k="${k}">${k}</button>`).join("")}</div><div class="msg" id="msg" style="text-align:center"></div>`
@@ -490,14 +517,22 @@ function vB2(){
 }
 function vTank(){
   if(stage<3) return notFound();
-  return `<section style="padding:30px 0"><div class="inner" style="max-width:720px"><div class="dark">${bubbles()}<div class="warn">TANK 10</div><h2>展示生物：ヒト</h2>
+  if(stage>=5) return `<section style="padding:30px 0"><div class="inner" style="max-width:720px"><div class="dark"><div class="warn">TANK 10</div><h2>${after(4)?"空っぽの水槽":"展示中"}</h2><p>${after(4)?"水は抜かれ、ガラスの内側には、小さな手形だけが残っている。":`個体名「${exName()}」。ガラスの向こうから、こちらを見ている。`}</p><button id="retry" style="margin-top:16px">第10水槽からやり直す</button></div></div></section>`;
+  let h=`<section style="padding:30px 0"><div class="inner" style="max-width:720px"><div class="dark">${bubbles()}<div class="warn">TANK 10</div><h2>展示生物：ヒト</h2>
   <p style="font-size:14.5px">扉の奥は、空っぽの巨大な水槽だった。<br>背後で扉が閉まる。足元から、冷たい水が満ちてくる。<br>分厚いガラスに、見覚えのある顔が映っている。</p>
-  <dl class="panel"><dt>展示生物</dt><dd>ヒト</dd><dt>来館日</dt><dd>${today()}</dd><dt>性格</dt><dd>好奇心が強く、なんでも調べたがる</dd><dt>個体名</dt><dd id="nm">${stage>=5?"さえき":"（未登録）"}</dd></dl>
-  ${stage===3?`<div style="margin-top:16px;border:1px solid #6b2a2a;padding:14px;background:#140808"><b style="color:#e06a5a">給水ポンプ 作動中</b><div class="water"><i id="wl" style="width:30%"></i></div><small style="color:#8fa6af">水位 <span id="wp">30</span>%　―　停止コード（ひらがな）を入力してください</small>
-  <form class="row" id="pf"><input id="pfi" placeholder="停止コード" autocomplete="off"><button>停止</button></form><div class="msg" id="pmsg"></div></div>`:""}
-  ${stage===4?`<p style="font-size:13.5px;margin-top:14px;color:#7fd0d0">ポンプは止まった。水は胸の高さで止まっている。</p>`:""}
-  ${stage!==4?"":`<p style="font-size:13.5px;margin-top:14px;color:#8fa6af">パネルの下に入力端末がある。<br>「個体名を登録してください」</p>
-  <form class="row" id="nf"><input id="nfi" placeholder="個体名" autocomplete="off"><button>登録</button></form><div class="msg" id="msg"></div>`}</div></div></section>`;
+  <dl class="panel"><dt>展示生物</dt><dd>ヒト</dd><dt>来館日</dt><dd>${today()}</dd><dt>性格</dt><dd>好奇心が強く、なんでも調べたがる</dd><dt>個体名</dt><dd id="nm">（未登録）</dd></dl>`;
+  if(stage===3) h+=`<div style="margin-top:16px;border:1px solid #6b2a2a;padding:14px;background:#140808"><b style="color:#e06a5a">給水ポンプ 作動中</b><div class="water"><i id="wl" style="width:30%"></i></div><small style="color:#8fa6af">水位 <span id="wp">30</span>%　―　停止コード（ひらがな）を入力してください</small>
+  <form class="row" id="pf"><input id="pfi" placeholder="停止コード" autocomplete="off"><button>停止</button></form><div class="msg" id="pmsg"></div></div>`;
+  if(stage===4){
+    h+=`<p style="font-size:13.5px;margin-top:14px;color:#7fd0d0">ポンプは止まった。水は胸の高さで止まっている。</p>`;
+    if(!admin) h+=`<p style="font-size:13.5px;margin-top:10px;color:#8fa6af">パネルの下に入力端末がある。<br>「個体名を登録してください」</p>
+  <form class="row" id="nf"><input id="nfi" placeholder="個体名" autocomplete="off"><button>登録</button></form><div class="msg" id="msg"></div>
+  <p style="font-size:11px;color:#4b6670;margin-top:10px">※ 管理者の方は、個体名の欄に合言葉を入力してください。</p>`;
+    else h+=`<div class="admin"><b style="color:#7fd0d0">管理者モード</b><p style="font-size:12.5px;color:#8fa6af">ようこそ、管理者さま。</p>
+  <h3>個体名の変更</h3><p style="font-size:12.5px;color:#8fa6af">登録する職員の名前（ひらがな）を入力してください。</p><form class="row" id="af"><input id="afi" placeholder="職員名" autocomplete="off"><button>変更</button></form><div class="msg" id="amsg"></div>
+  <h3>非常扉の開放</h3><p style="font-size:12.5px;color:#8fa6af">開放コードは、表のページの「白いところ」に記してあります。（料金表）</p><form class="row" id="ef"><input id="efi" placeholder="開放コード" inputmode="numeric" autocomplete="off"><button>開放</button></form><div class="msg" id="emsg"></div></div>`;
+  }
+  return h+`</div></div></section>`;
 }
 
 /* ===== ルーティング ===== */
@@ -539,15 +574,29 @@ function bind(){
   }
   const pf=document.getElementById("pf");
   if(pf){let w=30;clearInterval(window._wt);
-    window._wt=setInterval(()=>{const el=document.getElementById("wl");if(!el){clearInterval(window._wt);return}w=Math.min(92,w+1);el.style.width=w+"%";document.getElementById("wp").textContent=w},1500);
+    window._wt=setInterval(()=>{const el=document.getElementById("wl");if(!el){clearInterval(window._wt);return}w=Math.min(100,w+1);el.style.width=w+"%";document.getElementById("wp").textContent=w;if(w>=100){clearInterval(window._wt);ending(1)}},1300);
     pf.onsubmit=e=>{e.preventDefault();const v=norm(document.getElementById("pfi").value);
       if(v==="とめて"||v==="止めて"){clearInterval(window._wt);setStage(4);route()}
       else{document.getElementById("pmsg").textContent=v?"コードが違います。水位が上がっていく。":"入力してください";shake()}};
   }
+  const tb=document.getElementById("tagbtn");
+  if(tb) tb.onclick=e=>{e.stopPropagation();document.getElementById("tagback").style.display="block";document.getElementById("tagback").scrollIntoView({behavior:"smooth",block:"center"})};
   const nf=document.getElementById("nf");
   if(nf) nf.onsubmit=e=>{e.preventDefault();const raw=document.getElementById("nfi").value,v=norm(raw);
-    if(v==="さえき"||v==="佐伯"){document.getElementById("nm").textContent="さえき";setTimeout(ending,900)}
+    if(v==="さえき"||v==="佐伯"){document.getElementById("nm").textContent="さえき";setTimeout(()=>ending(2),900)}
+    else if(v==="かんりしゃ"||v==="管理者"){admin=true;route()}
     else{document.getElementById("msg").textContent= v?"「"+esc(raw)+"」は、この個体の名前ではありません":"入力してください";shake()}};
+  const af=document.getElementById("af");
+  if(af) af.onsubmit=e=>{e.preventDefault();const raw=document.getElementById("afi").value,v=norm(raw);
+    if(v==="さえき"||v==="佐伯"){document.getElementById("nm").textContent="さえき";setTimeout(()=>ending(2),900)}
+    else if(["あおなぎ","あおなぎおさむ","あおなぎしゅう","かんちょう","館長"].includes(v)){document.getElementById("nm").textContent="あおなぎ";setTimeout(()=>ending(3),900)}
+    else{document.getElementById("amsg").textContent=v?"該当する職員が見つかりません":"入力してください";shake()}};
+  const ef=document.getElementById("ef");
+  if(ef) ef.onsubmit=e=>{e.preventDefault();const v=norm(document.getElementById("efi").value).replace(/^0+/,"");
+    if(v==="580"){setTimeout(()=>ending(4),400)}
+    else{document.getElementById("emsg").textContent=v?"コードが違います":"入力してください";shake()}};
+  const rt=document.getElementById("retry");
+  if(rt) rt.onclick=()=>{stage=4;last=0;admin=false;save();applyStage();route()};
 }
 
 /* ===== 検索 ===== */
@@ -572,20 +621,30 @@ document.getElementById("sf").onsubmit=e=>{
 };
 
 /* ===== エンディング ===== */
-function ending(){
-  setStage(5);
-  const lines=["個体名「さえき」を登録しました。","……思い出しましたか。","日誌を書いていたのも、","地下で記録をつけていたのも、","あなたでした。","第10水槽　展示生物：ヒト","水位が、上がっていきます。",'<span class="eye">👁</span>',"ご来館、ありがとうございました。"];
+const END_L={
+ 1:["水位 100%。","ガラスの向こうで、誰かが手を振っている。","……館長だ。","あなたは、ゆっくりと沈んでいく。","第10水槽　展示を開始します。"],
+ 2:["個体名「さえき」を登録しました。","……思い出しましたか。","日誌を書いていたのも、","地下で記録をつけていたのも、","あなたでした。","第10水槽　展示生物：ヒト","水位が、上がっていきます。",'<span class="eye">👁</span>',"ご来館、ありがとうございました。"],
+ 3:["個体名「あおなぎ」を登録しました。","ガラスの向こうに、館長が立っていた。","まばたきをした次の瞬間、","館長は、水槽の中にいた。","あなたは、ガラスのこちら側に立っている。","胸の名札には『館長　さえき』。","……次の展示は、誰にしましょうか。"],
+ 4:["非常扉が、開いた。","冷たい夜風。遠くに、町の明かりが見える。","ポケットの中に、くしゃくしゃの名札。","『飼育スタッフ　さえき』","……そうだ。ぼくの名前は、さえき。","翌朝、あおなぎ水族館は臨時休館となった。","館長の行方は、誰も知らない。"]};
+function ending(id){
+  clearInterval(window._wt);
+  if(!ends.includes(id)) ends.push(id);
+  if(id===1){stage=3;last=0}else{stage=5;last=id}
+  admin=false;save();applyStage();
+  const lines=[...END_L[id],`<span class="en" style="font-size:13px;color:#7fb6c6">${id===4?"TRUE END":"END "+id}　―　${END_T[id]}</span>`,`<small style="font-size:12px;color:#6f8c97">エンディング ${ends.length} / 4</small>`];
   const d=document.createElement("div");d.id="end";
-  d.innerHTML=`<div class="water"></div>`+lines.map(l=>`<p>${l}</p>`).join("")+`<button>トップへ戻る</button>`;
+  if(id===4) d.style.background="#0b1a2a";
+  d.innerHTML=(id===4?"":`<div class="water"></div>`)+lines.map(l=>`<p>${l}</p>`).join("")+`<div><button id="eb1">トップへ戻る</button> <button id="eb2">第10水槽からやり直す</button></div>`;
   document.body.appendChild(d);
-  requestAnimationFrame(()=>requestAnimationFrame(()=>d.querySelector(".water").style.height="100%"));
+  if(id!==4) requestAnimationFrame(()=>requestAnimationFrame(()=>d.querySelector(".water").style.height="100%"));
   const ps=d.querySelectorAll("p");
-  ps.forEach((p,i)=>setTimeout(()=>p.classList.add("v"),800+i*1500));
-  setTimeout(()=>d.querySelector("button").style.opacity=1,800+ps.length*1500);
-  d.querySelector("button").onclick=()=>{d.remove();location.hash="#top";route()};
+  ps.forEach((p,i)=>setTimeout(()=>p.classList.add("v"),800+i*1400));
+  setTimeout(()=>d.querySelectorAll("button").forEach(b=>b.style.opacity=1),800+ps.length*1400);
+  d.querySelector("#eb1").onclick=()=>{d.remove();location.hash="#top";route()};
+  d.querySelector("#eb2").onclick=()=>{d.remove();stage=id===1?3:4;last=0;save();applyStage();if(location.hash==="#tank10")route();else location.hash="#tank10"};
 }
 document.getElementById("reset").onclick=function(){
-  if(this.dataset.c){try{localStorage.removeItem(KEY)}catch(e){}stage=0;this.dataset.c="";this.textContent="データを初期化";applyStage();location.hash="#top";route();}
+  if(this.dataset.c){try{localStorage.removeItem(KEY);localStorage.removeItem(KEY+"-ends");localStorage.removeItem(KEY+"-last")}catch(e){}stage=0;ends=[];last=0;admin=false;this.dataset.c="";this.textContent="データを初期化";applyStage();location.hash="#top";route();}
   else{this.dataset.c=1;this.textContent="本当に初期化する？（もう一度押す）"}
 };
 applyStage(); route();
