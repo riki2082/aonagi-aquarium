@@ -162,6 +162,14 @@ footer{background:var(--foot);color:#c9d8e6;font-size:13px;padding:48px 0 24px}
 .bubbles span{position:absolute;bottom:-20px;width:8px;height:8px;border:1px solid rgba(160,220,240,.35);border-radius:50%;animation:up 7s linear infinite}
 @keyframes up{to{transform:translateY(-800px);opacity:0}}
 .shake{animation:sh .35s}@keyframes sh{25%,75%{transform:translateX(-5px)}50%{transform:translateX(5px)}}
+.flash{position:relative;height:500px;margin-top:14px;border:1px solid #14252c;touch-action:none;cursor:none;overflow:hidden;background:#0a1418;user-select:none;-webkit-user-select:none}
+.flash .it{position:absolute;font-size:13.5px;line-height:1.8;color:#cfd8dc}
+.flash .paper{background:#d9d2c3;color:#2a2620;padding:10px 12px;transform:rotate(-3deg);box-shadow:0 2px 6px #000;max-width:170px}
+.flash .scrawl{font-size:20px;color:#8c1d1d;letter-spacing:.2em}
+.flash .shade{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle 64px at var(--x,-200px) var(--y,-200px),rgba(0,0,0,0) 0,rgba(0,0,0,.4) 50px,rgba(0,0,0,.985) 78px)}
+.flash .tip{position:absolute;left:0;right:0;bottom:10px;text-align:center;font-size:12px;color:#55707a;pointer-events:none}
+.water{height:14px;background:#0e1a20;border:1px solid #2a4350;margin:10px 0 4px;position:relative;overflow:hidden}
+.water i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#0d4c63,#2aa0c0);transition:width 1s linear}
 /* ===== 段階演出 ===== */
 body.s2 .ph img{filter:saturate(.35) brightness(.92)}
 body.s2 .util{background:#3c4a55}
@@ -225,7 +233,7 @@ function setStage(n){if(n>stage){stage=n;try{localStorage.setItem(KEY,stage)}cat
 function applyStage(){
   document.body.classList.toggle("s2",stage===2);
   document.body.classList.toggle("s3",stage>=3);
-  document.getElementById("ticker").textContent= stage>=4?"本日より新展示「ヒト」公開中　水位は毎日少しずつ上がります"
+  document.getElementById("ticker").textContent= stage>=5?"本日より新展示「ヒト」公開中　水位は毎日少しずつ上がります"
     : stage>=3?"本日は 通常どおり 営業して い ま す"
     : stage>=2?"本日は通常どおり営業しています（9:00〜　　　）"
     : "本日は通常どおり営業しています　｜　秋のスタンプラリー開催中";
@@ -310,11 +318,11 @@ function crowd(){
 function vTop(){
   const zones=ZONES.map(z=>`<a class="zone" href="#exhibits">${ph(z[2])}<span><small>${z[1]}</small>${z[0]}</span></a>`).join("");
   const newOnes=[{k:"penguin",t:"フンボルトペンギンのヒナ",d:"8月に誕生したヒナが、ペンギンの浜でデビューしました。",m:"2026年10月"},{k:"shiroiruka",t:"シロイルカ「みぞれ」",d:"北の海エリアに、若いメスの仲間が加わりました。",m:"2026年9月"}];
-  if(stage>=2) newOnes.unshift({k:"human",t:"ヒト",d:stage>=4?"本日公開。個体名「さえき」。":"第10水槽にて、公開準備中です。",m:stage>=4?todayJ().slice(0,8):"近日"});
+  if(stage>=2) newOnes.unshift({k:"human",t:"ヒト",d:stage>=5?"本日公開。個体名「さえき」。":"第10水槽にて、公開準備中です。",m:stage>=5?todayJ().slice(0,8):"近日"});
   return `
-  <div class="hero">${ph(stage>=4?"human":"hero")}<div class="cover"></div>
+  <div class="hero">${ph(stage>=5?"human":"hero")}<div class="cover"></div>
     <div class="anniv"><b>${stage>=3?"――":"58"}</b>${stage>=3?"th":"th ANNIV."}<br>開館${stage>=3?"――":"58"}周年</div>
-    <div class="copy"><div class="inner"><div class="en">${stage>=4?"YOU ARE<br>THE EXHIBIT.":stage>=3?"COME DEEPER,<br>INTO THE SEA.":"DIVE INTO<br>THE QUIET SEA."}</div><p>${stage>=3?"出口は、ありません。":"しずかな海を、のぞきにいこう。"}</p></div></div>
+    <div class="copy"><div class="inner"><div class="en">${stage>=5?"YOU ARE<br>THE EXHIBIT.":stage>=3?"COME DEEPER,<br>INTO THE SEA.":"DIVE INTO<br>THE QUIET SEA."}</div><p>${stage>=3?"出口は、ありません。":"しずかな海を、のぞきにいこう。"}</p></div></div>
   </div>
   <section><div class="inner">${sh("OPENING HOURS","営業時間","guide")}<div class="hours">${hoursRows()}${crowd()}</div></div></section>
   <section class="alt"><div class="inner">${sh("NEWS","ニュース","news")}${newsList(5)}</div></section>
@@ -345,7 +353,7 @@ function schedList(max){
 function blogCards(n){return [...POSTS].reverse().slice(0,n).map(p=>`<a class="card" href="#blog"><div class="meta en">${p.dt}</div><h3>${p.t}</h3><p>${p.b.slice(0,42)}…</p></a>`).join("")}
 
 function vExhibits(){
-  const list=[...ANIMALS]; if(stage>=2) list.push(stage>=4?{...HUMAN,d:"本日公開。個体名「さえき」。目を合わせないでください。"}:HUMAN);
+  const list=[...ANIMALS]; if(stage>=2) list.push(stage>=5?{...HUMAN,d:"本日公開。個体名「さえき」。目を合わせないでください。"}:HUMAN);
   return head("EXHIBITS","展示")+`<section style="padding-top:20px"><div class="inner"><p class="lead">当館で暮らす生きものたちをご紹介します。番号は館内マップの水槽番号に対応しています。</p>
   <div class="cards">${list.map(a=>`<div class="card">${a.no===10&&stage<3?`<div class="ph" style="aspect-ratio:4/3;background:#111"></div>`:ph(a.k)}<div class="meta"><span class="no">TANK ${pad(a.no)}</span>　${a.zone}</div><h3>${circ(a.no)} ${a.name}</h3><p>${a.d}</p></div>`).join("")}</div></div></section>`;
 }
@@ -421,8 +429,11 @@ function vFaq(){
    ["スタンプラリー・クイズの答えはどこに入れればいいですか？","ページ上部の「サイト内検索」に入力してください。水槽番号は「館内マップ」でご確認いただけます。"],
   ];
   if(stage>=1) f.push(["地下記録室のパスワードがわかりません","「わたしの日記」とは、飼育スタッフが書いている当館の日誌（ブログ）のことです。日誌は新しい順に並んでいますので、ご注意ください。"]);
-  if(stage>=2) f.push(["第10水槽の電子錠が開きません","住人は「展示」と「館内マップ」でご確認ください。ヒレ足も足として数えます。魚に足はありません。⑩の住人の足は、あなたと同じ本数です。"]);
-  if(stage>=3) f.push(["個体名がわかりません",'トップページの館長あいさつを、もう一度よく読んでください。<span class="r">赤い文字</span>が混じっていませんか。「きろく」とは、地下の飼育日誌のことです。'],
+  if(stage>=2) f.push(["地下二階（館長室）への行き方がわかりません","記録室の札の「B1」と、ページのURLの末尾（#b1）を見比べてください。URLを書き換えられない環境では、サイト内検索に「B2」と入力しても構いません。"],
+                     ["館長室が暗くて何も見えません","暗闇を指（またはマウス）でなぞってください。懐中電灯の光が届きます。"],
+                     ["第10水槽の電子錠が開きません","住人は「展示」と「館内マップ」でご確認ください。ヒレ足も足として数えます。魚に足はありません。⑩の住人の足は、あなたと同じ本数です。"]);
+  if(stage>=3) f.push(["給水ポンプの停止コードがわかりません","館長室のメモの数字は「行」と「段」です。あ・か・さ・た・な…が行（1〜10）、あ・い・う・え・お が段（1〜5）です。"]);
+  if(stage>=4) f.push(["個体名がわかりません",'トップページの館長あいさつを、もう一度よく読んでください。<span class="r">赤い文字</span>が混じっていませんか。「きろく」とは、地下の飼育日誌のことです。'],
                      ["帰りたいです","当館からの退館は受け付けておりません。"]);
   f.push(["館内で写真を撮ってもいいですか？","フラッシュを使わなければ撮影いただけます。三脚・自撮り棒のご使用はご遠慮ください。"],["ベビーカーで入館できますか？","館内はすべてバリアフリーです。ベビーカーの貸し出しも行っています。"]);
   return head("FAQ","よくある質問")+`<section style="padding-top:10px"><div class="inner" style="max-width:820px">${f.map(x=>`<div class="q">${x[0]}</div><div class="a">${x[1]}</div>`).join("")}</div></section>`;
@@ -441,36 +452,56 @@ const DIARY=[
  ["8月29日","ノートを新しくした。表のブログとは別に、本当のことを書くためのノート。"],
  ["11月3日","館の奥で、第10水槽の工事が始まった。マップには載せないらしい。"],
  ["11月6日","水槽の説明パネルが届いた。展示生物の欄には「ヒト」とだけ書いてあった。"],
- ["11月7日","電子錠の番号を館長から教わった。⑤⑦⑨⑩の住人の足の数を、順番に並べたものだそうだ。覚え方まで、あの人らしい。"],
+ ["11月7日","第10水槽の電子錠の番号は、館長しか知らない。館長室の暗がりのどこかに、メモを残しているはずだ。"],
  ["11月8日","閉館後、誰かが館内に残っていた。……来館者じゃない。あれは、来館者じゃない。"],
  ["11月9日","パネルの「個体名」の欄だけが、まだ空いている。誰の名前が入るんだろう。<br>最近、自分の名前を書こうとすると、手が止まる。"],
+ ["11月10日","館長は、この記録室よりもう一つ下の階にこもっている。入口はどこにもない。<br>でも、ここの部屋番号を一つ進めれば、たどり着けるはずだ。"],
 ];
 function vB1(){
   if(stage<1) return notFound();
-  let h=`<section style="padding:30px 0"><div class="inner" style="max-width:720px"><div class="dark">${bubbles()}<div class="warn">STAFF ONLY</div><h2>地下記録室</h2>`;
+  let h=`<section style="padding:30px 0"><div class="inner" style="max-width:720px"><div class="dark">${bubbles()}<div class="warn">STAFF ONLY ／ ROOM B1</div><h2>地下記録室 <span class="en" style="font-size:14px;border:1px solid #2f5d6c;padding:0 8px;margin-left:6px">B1</span></h2>`;
   if(stage<2){
     h+=`<p style="font-size:14.5px">ここは関係者以外立入禁止です。<br>飼育日誌の閲覧には、パスワードが必要です。</p>
     <p style="font-size:14px;margin-top:14px;color:#8fa6af">― パスワードは、わたしの日記の「頭」にある。<br>　古いものから、順に。</p>
     <form class="row" id="pw"><input id="pwi" placeholder="パスワード" autocomplete="off"><button>開く</button></form><div class="msg" id="msg"></div>`;
   }else{
     h+=`<p style="font-size:13px;color:#6f8c97">飼育日誌（閲覧中）</p><div class="diary">${DIARY.map(d=>`<p><span class="dd">${d[0]}</span>${d[1]}</p>`).join("")}</div>`;
-    h+= stage<3 ? `<h3 style="margin-top:22px;color:#a9c1cc;font-weight:600">第10水槽　電子錠</h3><div class="lcd" id="lcd"></div>
+    h+= stage>=3 ? `<p style="text-align:center;margin-top:20px"><a href="#tank10" style="color:#6cc;border-bottom:1px solid">第10水槽へ進む</a></p>`:`<p style="text-align:center;margin-top:20px;font-size:12px;color:#4b6670">記録室の扉には、行き止まりの階段がある。</p>`;
+  }
+  return h+`</div></div></section>`;
+}
+function vB2(){
+  if(stage<2) return notFound();
+  let h=`<section style="padding:30px 0"><div class="inner" style="max-width:720px"><div class="dark">${bubbles()}<div class="warn">ROOM B2</div><h2>館長室 <span class="en" style="font-size:14px;border:1px solid #2f5d6c;padding:0 8px;margin-left:6px">B2</span></h2>
+  <p style="font-size:14.5px">階段を降りた先は、明かりのない部屋だった。<br>床に転がっていた懐中電灯を拾う。電池は、まだ生きている。</p>
+  <div class="flash" id="flash">
+    <div class="it paper" style="left:6%;top:3%">電子錠の番号<br>⑤⑦⑨⑩ の住人の<br><b>足の数</b>を、順に。</div>
+    <div class="it" style="right:5%;top:27%;max-width:48%;font-size:12px;color:#7e939b">本棚。背表紙はすべて<br>「飼育日誌」と書かれている。</div>
+    <div class="it scrawl" style="left:7%;top:43%;font-size:18px">つぎの てんじは<br>きまった</div>
+    <div class="it paper" style="right:6%;top:57%;transform:rotate(4deg)">ポンプを止める言葉<br><b style="font-size:16px;letter-spacing:.1em">4-5　7-4　4-4</b><br><small>（行・段）</small></div>
+    <div class="it" style="left:9%;top:66%;font-size:22px;color:#c33">👁</div>
+    <div class="it" style="left:6%;top:82%;max-width:60%;font-size:11px;color:#6a7e86">机の上に、館長の名札。<br>その下に、もう一枚の名札が伏せてある。</div>
+    <div class="shade" id="shade"></div><div class="tip" id="tip">暗闇をなぞって照らす</div>
+  </div>`;
+  h+= stage<3 ? `<h3 style="margin-top:22px;color:#a9c1cc;font-weight:600">第10水槽　電子錠</h3><p style="font-size:13px;color:#7e939b">部屋の奥の扉に、テンキーがついている。</p><div class="lcd" id="lcd"></div>
       <div class="keys">${[1,2,3,4,5,6,7,8,9,"C",0,"OK"].map(k=>`<button data-k="${k}">${k}</button>`).join("")}</div><div class="msg" id="msg" style="text-align:center"></div>`
       : `<p style="text-align:center;margin-top:20px"><a href="#tank10" style="color:#6cc;border-bottom:1px solid">第10水槽へ進む</a></p>`;
-  }
   return h+`</div></div></section>`;
 }
 function vTank(){
   if(stage<3) return notFound();
   return `<section style="padding:30px 0"><div class="inner" style="max-width:720px"><div class="dark">${bubbles()}<div class="warn">TANK 10</div><h2>展示生物：ヒト</h2>
   <p style="font-size:14.5px">扉の奥は、空っぽの巨大な水槽だった。<br>背後で扉が閉まる。足元から、冷たい水が満ちてくる。<br>分厚いガラスに、見覚えのある顔が映っている。</p>
-  <dl class="panel"><dt>展示生物</dt><dd>ヒト</dd><dt>来館日</dt><dd>${today()}</dd><dt>性格</dt><dd>好奇心が強く、なんでも調べたがる</dd><dt>個体名</dt><dd id="nm">${stage>=4?"さえき":"（未登録）"}</dd></dl>
-  ${stage>=4?"":`<p style="font-size:13.5px;margin-top:14px;color:#8fa6af">パネルの下に入力端末がある。<br>「個体名を登録してください」</p>
+  <dl class="panel"><dt>展示生物</dt><dd>ヒト</dd><dt>来館日</dt><dd>${today()}</dd><dt>性格</dt><dd>好奇心が強く、なんでも調べたがる</dd><dt>個体名</dt><dd id="nm">${stage>=5?"さえき":"（未登録）"}</dd></dl>
+  ${stage===3?`<div style="margin-top:16px;border:1px solid #6b2a2a;padding:14px;background:#140808"><b style="color:#e06a5a">給水ポンプ 作動中</b><div class="water"><i id="wl" style="width:30%"></i></div><small style="color:#8fa6af">水位 <span id="wp">30</span>%　―　停止コード（ひらがな）を入力してください</small>
+  <form class="row" id="pf"><input id="pfi" placeholder="停止コード" autocomplete="off"><button>停止</button></form><div class="msg" id="pmsg"></div></div>`:""}
+  ${stage===4?`<p style="font-size:13.5px;margin-top:14px;color:#7fd0d0">ポンプは止まった。水は胸の高さで止まっている。</p>`:""}
+  ${stage!==4?"":`<p style="font-size:13.5px;margin-top:14px;color:#8fa6af">パネルの下に入力端末がある。<br>「個体名を登録してください」</p>
   <form class="row" id="nf"><input id="nfi" placeholder="個体名" autocomplete="off"><button>登録</button></form><div class="msg" id="msg"></div>`}</div></div></section>`;
 }
 
 /* ===== ルーティング ===== */
-const VIEWS={top:vTop,exhibits:vExhibits,map:vMap,event:vEvent,schedule:vSchedule,guide:vGuide,access:vAccess,blog:vBlog,news:vNews,faq:vFaq,credits:vCredits,b1:vB1,tank10:vTank,animals:vExhibits};
+const VIEWS={top:vTop,exhibits:vExhibits,map:vMap,event:vEvent,schedule:vSchedule,guide:vGuide,access:vAccess,blog:vBlog,news:vNews,faq:vFaq,credits:vCredits,b1:vB1,b2:vB2,tank10:vTank,animals:vExhibits};
 function route(){
   const h=(location.hash||"#top").slice(1);
   document.getElementById("gnav").innerHTML=PAGES.map(([k,v])=>`<a href="#${k}" class="${k===h?"on":""}">${v}</a>`).join("");
@@ -499,6 +530,20 @@ function bind(){
       }else if(code.length<4){code+=k}
       lcd.textContent=code.replace(/./g,"＊").slice(0,-1)+(code.slice(-1)||"");
     });}
+  const fl=document.getElementById("flash");
+  if(fl){const sd=document.getElementById("shade"),tip=document.getElementById("tip");
+    const mv=(x,y)=>{const r=fl.getBoundingClientRect();sd.style.setProperty("--x",(x-r.left)+"px");sd.style.setProperty("--y",(y-r.top)+"px");tip.style.display="none"};
+    fl.addEventListener("pointermove",e=>mv(e.clientX,e.clientY));
+    fl.addEventListener("pointerdown",e=>mv(e.clientX,e.clientY));
+    fl.addEventListener("touchmove",e=>{e.preventDefault();const t=e.touches[0];mv(t.clientX,t.clientY)},{passive:false});
+  }
+  const pf=document.getElementById("pf");
+  if(pf){let w=30;clearInterval(window._wt);
+    window._wt=setInterval(()=>{const el=document.getElementById("wl");if(!el){clearInterval(window._wt);return}w=Math.min(92,w+1);el.style.width=w+"%";document.getElementById("wp").textContent=w},1500);
+    pf.onsubmit=e=>{e.preventDefault();const v=norm(document.getElementById("pfi").value);
+      if(v==="とめて"||v==="止めて"){clearInterval(window._wt);setStage(4);route()}
+      else{document.getElementById("pmsg").textContent=v?"コードが違います。水位が上がっていく。":"入力してください";shake()}};
+  }
   const nf=document.getElementById("nf");
   if(nf) nf.onsubmit=e=>{e.preventDefault();const raw=document.getElementById("nfi").value,v=norm(raw);
     if(v==="さえき"||v==="佐伯"){document.getElementById("nm").textContent="さえき";setTimeout(ending,900)}
@@ -511,6 +556,7 @@ document.getElementById("sf").onsubmit=e=>{
   const raw=document.getElementById("sq").value, q=norm(raw);
   if(!q) return;
   if(q==="ちかしつ"||q==="地下室"){setStage(1);document.getElementById("sq").value="";if(location.hash==="#b1")route();else location.hash="#b1";return}
+  if(["b2","ちかにかい","地下二階","館長室","かんちょうしつ"].includes(q.toLowerCase())&&stage>=2){document.getElementById("sq").value="";if(location.hash==="#b2")route();else location.hash="#b2";return}
   let res=[];
   ANIMALS.forEach(a=>{if(hira(a.name).includes(q))res.push(`<li style="grid-template-columns:1fr"><span><a href="#exhibits" style="color:var(--blue)">${a.name}</a>　水槽${circ(a.no)}・${a.zone}</span></li>`)});
   if(stage>=2&&q==="ひと") res.push(`<li style="grid-template-columns:1fr"><span><a href="#exhibits" style="color:var(--blue)">ヒト</a>　水槽⑩（${stage>=3?"展示中":"準備中"}）</span></li>`);
@@ -527,7 +573,7 @@ document.getElementById("sf").onsubmit=e=>{
 
 /* ===== エンディング ===== */
 function ending(){
-  setStage(4);
+  setStage(5);
   const lines=["個体名「さえき」を登録しました。","……思い出しましたか。","日誌を書いていたのも、","地下で記録をつけていたのも、","あなたでした。","第10水槽　展示生物：ヒト","水位が、上がっていきます。",'<span class="eye">👁</span>',"ご来館、ありがとうございました。"];
   const d=document.createElement("div");d.id="end";
   d.innerHTML=`<div class="water"></div>`+lines.map(l=>`<p>${l}</p>`).join("")+`<button>トップへ戻る</button>`;
